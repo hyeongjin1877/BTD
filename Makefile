@@ -1,8 +1,19 @@
-final.elf: main.o 1.o 2.o
-	gcc -o final.elf main.o 1.o 2.o
-main.o: main.c myProject.h
-	gcc -c main.c
-1.o: 1.c myProject.h
-	gcc -c 1.c 
-2.o: 2.c myProject.h
-	gcc -c 2.c
+CC = arm-linux-gnueabi-gcc
+AR = arm-linux-gnueabi-ar
+
+all: libMyPeri.a ledtest buttontest
+
+ledtest: ledtest.c libMyPeri.a
+	$(CC) ledtest.c -lMyPeri -L. -o ledtest
+
+buttontest: buttontest.o libMyPeri.a
+	$(CC) buttontest.c -lMyPeri -L. -lpthread -o buttontest
+
+libMyPeri.a: button.o led.o
+	$(AR) rc libMyPeri.a led.o button.o
+
+button.o: button.h button.c
+	$(CC) -c button.c -o button.o
+
+led.o: led.h led.c
+	$(CC) -c led.c -o led.o
