@@ -6,7 +6,7 @@ all: libMyPeri.a ledtest buttontest
 ledtest: ledtest.c libMyPeri.a
 	$(CC) ledtest.c -lMyPeri -L. -o ledtest
 
-buttontest: buttontest.o libMyPeri.a
+buttontest: buttontest.c libMyPeri.a
 	$(CC) buttontest.c -lMyPeri -L. -lpthread -o buttontest
 
 libMyPeri.a: button.o led.o
