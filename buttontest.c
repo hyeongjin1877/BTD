@@ -16,35 +16,36 @@ int main(void){
 	int msdID = msgget (MESSAGE_ID, IPC_CREAT|0666);
 
 	buttonInit();
+
 	while(1){
-		msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput),0,0);
+		msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput), 0, 0);
 		switch(rcv.keyInput){
 			case 1:
-				printf("VOLUME UP \r\n");
+				printf("VOLUME UP\n");
 				break;
 			case 2:
-				printf("HOME\r\n");
+				printf("HOME\n");
 				break;
 			case 3:
-				printf("SEARCH\r\n");
+				printf("SEARCH\n");
 				break;
 			case 4:
-				printf("BACK\r\n");
+				printf("BACK\n");
 				break;
 			case 5:
-				printf("MENU\r\n");
+				printf("MENU\n");
 				break;
 			case 6:
-				printf("VOLUME DOWN\r\n");
+				printf("VOLUME DOWN\n");
 				break;
 		}
-		msgrcv(msgID, &rcv.pressed, sizeof(rcv.pressed),0,0);
+		msgrcv(msgID, &rcv.pressed, sizeof(rcv.pressed), 0, 0);
 		switch(rcv.pressed){
 			case 1:
-				printf("on\r\n");
+				printf("BUTTON PRESSED\n\n");
 				break;
 			case 2:
-				printf("off\r\n");
+				printf("BUTTON UNPRESSED\n\n");
 				break;
 		}
 	}
