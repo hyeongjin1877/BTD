@@ -1,7 +1,10 @@
 CC = arm-linux-gnueabi-gcc
 AR = arm-linux-gnueabi-ar
 
-all: libMyPeri.a ledtest buttontest buzzertest fndtest
+all: libMyPeri.a ledtest buzzertest fndtest buttontest colorledtest
+
+colorledtest: colorledtest.c libMyPeri.a
+	$(CC) colorledtest.c -lMyPeri -L. -o colorledtest
 
 ledtest: ledtest.c libMyPeri.a
 	$(CC) ledtest.c -lMyPeri -L. -o ledtest
@@ -15,8 +18,11 @@ buzzertest: buzzertest.c libMyPeri.a
 fndtest: fndtest.c libMyPeri.a
 	$(CC) fndtest.c -lMyPeri -L. -o fndtest
 
-libMyPeri.a: button.o led.o buzzer.o fnd.o
-	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o
+libMyPeri.a: button.o led.o buzzer.o fnd.o colorled.o
+	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o colorled.o
+
+colorled.o: colorled.h colorled.c
+	$(CC) -c colorled.c -o colorled.o
 
 fnd.o: fnd.h fnd.c
 	$(CC) -c fnd.c -o fnd.o
