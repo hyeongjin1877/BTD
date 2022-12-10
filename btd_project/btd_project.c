@@ -14,7 +14,8 @@
 #include "colorled.h"
 #include "led.h"
 #include "textlcd.h"
-
+#include "libBitmap.h"
+#include "bitmapFileHeader.h"
 
 #define MODE_STATIC_DIS		0
 static int msgID;
@@ -84,6 +85,12 @@ void *thread_object_2(){
 
 int main(void){
     btn = 0;
+    int cols = 0, rows = 0;
+    int screen_width;
+    int screen_height;
+    int bits_per_pixel;
+    int line_length;
+    char *data;
     pthread_t thread[2];
 	int msdID = msgget (MESSAGE_ID, IPC_CREAT|0666);
 
@@ -92,8 +99,18 @@ int main(void){
     ledLibInit();
     lcdtextInit();
 
+    if ( fb_init(&screen_width, &screen_height, &bits_per_pixel, &line_length) < 0 )
+   {
+      printf ("FrameBuffer Init Failed\r\n");
+   }
+
 	printf("\nPRESS Search Button 50 times in 30 sec\n\n");
     lcdtextWrite("GAME START", "");
+
+    read_bmp("squidgamestart.bmp", &data, &cols, &rows);
+    fb_write(data, cols,rows);
+
+    msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput), 0, 0);
 
     while(1){
         int returnValue = 0;
@@ -119,11 +136,17 @@ int main(void){
         }
         step ++;
         mugunghwa_end = 0;
+        read_bmp("YH1.bmp", &data, &cols, &rows);
+        fb_write(data, cols,rows);
         system("sudo amixer sset 'Speaker' 40%");
         system("sudo aplay ./redlightgreenlight.wav");
         mugunghwa_end = 1;
+        read_bmp("YH2.bmp", &data, &cols, &rows);
+        fb_write(data, cols,rows);
         sleep(3);
     }
+
+    
     //system("sudo amixer sset 'Speaker' 20%");
     //usleep(1850000);
     //system("sudo aplay ./bgm.wav"); 
@@ -135,6 +158,7 @@ int main(void){
     buttonExit();
     ledLibExit();
     lcdtextExit();
-
+    close_bmp();
+   fb_close();    
     return 0;
 }
