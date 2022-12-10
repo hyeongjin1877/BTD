@@ -54,15 +54,21 @@ int probeTouchPath(char *newPath)
 
 static char touchPath[200];
 static int fd;
-static int messageID;
+static int msgID;
 static pthread_t touchTh_id;
 
 static void *touchThFunc(void* arg)
 {    
-   BUTTON_MSG_T msgTx;
-   msgTx.messageNum = 1;
+   int x = 0;
+   int y = 0;
+
    struct input_event stEvent;
-   printf("Button Thread Ready\r\n");
+   BUTTON_MSG_T sendMsg;
+   sendMsg.messageNum = 1;
+   sendMsg.keyInput = 999;
+
+   //printf("Touch Thread Ready\r\n");
+   
    while (1)
    {
       read(fd, &stEvent, sizeof (stEvent));
@@ -71,17 +77,31 @@ static void *touchThFunc(void* arg)
          //뭔가 좌표값이 들어올것만 같다
          if(stEvent.code == ABS_MT_POSITION_X)
          {
-            printf("you touch X: %d\r\n", stEvent.value);
+            x = stEvent.value;
+            //printf("you touch X: %d\r\n", stEvent.value);
          }
          else if(stEvent.code == ABS_MT_POSITION_Y)
          {
-            printf("you touch Y: %d\r\n", stEvent.value);
+            y = stEvent.value;
+            //printf("you touch Y: %d\r\n", stEvent.value);
          }
       }
-      else if(stEvent.type == EV_SYN)
+      else if((stEvent.type == EV_KEY) && (stEvent.code == BTN_TOUCH))
       {
+         sendMsg.x = x;
+         sendMsg.y = y;
          //좌표 입력이 끝났다.
-         printf("You finished Touch!\r\n");
+         if(stEvent.value == 0)
+         {
+            sendMsg.pressed = 0;
+            //printf("You finished Touch!\r\n");
+         }
+         else if (stEvent.value == 1)
+         {
+            sendMsg.pressed = 1;
+            //printf("You touch Now!\r\n");
+         }
+         msgsnd(msgID, &sendMsg, sizeof(BUTTON_MSG_T) - sizeof(long int), 0);
       }
 /*
       if ( ( stEvent.type == EV_KEY) )
@@ -101,7 +121,7 @@ int touchInit(void)
       return 0;
    }
    fd=open (touchPath, O_RDONLY);
-   messageID = msgget (MESSAGE_ID, IPC_CREAT|0666);
+   msgID = msgget (MESSAGE_ID, IPC_CREAT|0666);
    pthread_create(&touchTh_id, NULL, touchThFunc, NULL);
    return 1;
 }
