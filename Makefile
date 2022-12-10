@@ -1,10 +1,13 @@
 CC = arm-linux-gnueabi-gcc
 AR = arm-linux-gnueabi-ar
 
-all: libMyPeri.a ledtest buzzertest fndtest buttontest colorledtest textlcdtestt
+all: libMyPeri.a ledtest buzzertest fndtest buttontest colorledtest textlcdtest gyrotest
 
-textlcdtestt: textlcdtest.c libMyPeri.a
-	$(CC) textlcdtest.c -lMyPeri -L. -o textlcdtestt
+gyrotest: gyrotest.c libMyPeri.a
+	$(CC) gyrotest.c -lMyPeri -L. -o gyrotest
+
+textlcdtest: textlcdtest.c libMyPeri.a
+	$(CC) textlcdtest.c -lMyPeri -L. -o textlcdtest
 
 colorledtest: colorledtest.c libMyPeri.a
 	$(CC) colorledtest.c -lMyPeri -L. -o colorledtest
@@ -21,8 +24,11 @@ buzzertest: buzzertest.c libMyPeri.a
 fndtest: fndtest.c libMyPeri.a
 	$(CC) fndtest.c -lMyPeri -L. -o fndtest
 
-libMyPeri.a: button.o led.o buzzer.o fnd.o colorled.o textlcd.o
-	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o colorled.o textlcd.o
+libMyPeri.a: button.o led.o buzzer.o fnd.o colorled.o textlcd.o gyro.o
+	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o colorled.o textlcd.o gyro.o
+
+gyro.o: gyro.h gyro.c
+	$(CC) -c gyro.c -o gyro.o
 
 textlcd.o: textlcddrv.h textlcd.c
 	$(CC) -c textlcd.c -o textlcd.o
