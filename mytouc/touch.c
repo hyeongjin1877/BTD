@@ -13,8 +13,8 @@
 #define     INPUT_DEVICE_LIST   "/dev/input/event"      //실제 디바이스 드라이버 노드파일: 뒤에 숫자가 붙음., ex)/dev/input/event5
 #define    PROBE_FILE   "/proc/bus/input/devices"      //PPT에 제시된 "이 파일을 까보면 event? 의 숫자를 알수 있다"는 바로 그 파일
 
-#define HAVE_TO_FIND_1    "N: Name=\"WaveShare WaveShare Touchscreen\"\n"
-#define HAVE_TO_FIND_2   "H: Handlers=mouse0 event4"
+#define HAVE_TO_FIND_1    "N: Name=\"st1232-touchscreen\"\n"
+#define HAVE_TO_FIND_2   "H: Handlers=event0"
 
 
 
@@ -28,7 +28,7 @@ int probeTouchPath(char *newPath)
    {
       char tmpStr[200];  //200자를 읽을 수 있게 버퍼
       fgets(tmpStr,200,fp);   //최대 200자를 읽어봄
-      //printf ("%s",tmpStr);
+      printf ("%s",tmpStr);
       if (strcmp(tmpStr,HAVE_TO_FIND_1) == 0)
       {
          printf("YES! I found!: %s\r\n", tmpStr);
@@ -42,6 +42,7 @@ int probeTouchPath(char *newPath)
          number = tmpStr[strlen(tmpStr)-3] - '0';   //Ascii character '0'-'9' (0x30-0x39) to interger(0)
       break; //while 문 탈출
       }
+      else printf("sibal");    
    }
    //이 상황에서 number에는 event? 중 ? 에 해당하는 숫자가 들어가 있다.
    fclose(fp);   
