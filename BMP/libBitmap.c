@@ -226,3 +226,59 @@ void fb_write(char* picData, int picWidth, int picHeight)
 		fb_doubleBufSwap();
 	#endif
 }
+
+static int running;
+
+void fb_write_b(char* picData, int picWidth, int picHeight, int running)
+{
+	int coor_y=0;
+	int coor_x=0;
+	int targetHeight = (fbHeight<picHeight)?fbHeight:picHeight;	//if Screen과 파일 사이즈가 안맞으면
+	int targetWidth = (fbWidth<picWidth)?fbWidth:picWidth;		//if Screen과 파일 사이즈가 안맞으면
+	
+	for(coor_y = 0; coor_y < targetHeight; coor_y++) 
+	{
+		int bmpYOffset = coor_y*picWidth*3; ///Every 1Pixel requires 3Bytes.
+		int bmpXOffset = 0;
+		for (coor_x=0; coor_x < targetWidth; coor_x++)
+		{
+			//BMP: B-G-R로 인코딩 됨, FB: 0-R-G-B로 인코딩 됨.
+			pfbmap[running+ coor_y*fbWidth+ (fbWidth-coor_x) + currentEmptyBufferPos] = 
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+2])<<16) 	+
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+1])<<8) 		+
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+0]));
+			bmpXOffset+=3;	//Three Byte.
+		}
+    }	
+	#ifdef ENABLED_DOUBLE_BUFFERING
+		fb_doubleBufSwap();
+	#endif
+}
+static int x_move;
+static int y_move;
+
+void fb_write_c(char* picData, int picWidth, int picHeight, int x_move, int y_move)
+{
+	int coor_y=0;
+	int coor_x=0;
+	int targetHeight = (fbHeight<picHeight)?fbHeight:picHeight;	//if Screen과 파일 사이즈가 안맞으면
+	int targetWidth = (fbWidth<picWidth)?fbWidth:picWidth;		//if Screen과 파일 사이즈가 안맞으면
+	
+	for(coor_y = 0; coor_y < targetHeight; coor_y++) 
+	{
+		int bmpYOffset = coor_y*picWidth*3; ///Every 1Pixel requires 3Bytes.
+		int bmpXOffset = 0;
+		for (coor_x=0; coor_x < targetWidth; coor_x++)
+		{
+			//BMP: B-G-R로 인코딩 됨, FB: 0-R-G-B로 인코딩 됨.
+			pfbmap[x_move+ (coor_y + y_move)*fbWidth+ (fbWidth-coor_x) + currentEmptyBufferPos] = 
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+2])<<16) 	+
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+1])<<8) 		+
+				((unsigned long)(picData[bmpYOffset+bmpXOffset+0]));
+			bmpXOffset+=3;	//Three Byte.
+		}
+    }	
+	#ifdef ENABLED_DOUBLE_BUFFERING
+		fb_doubleBufSwap();
+	#endif
+}
