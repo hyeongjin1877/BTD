@@ -16,6 +16,7 @@
 #include "textlcd.h"
 #include "libBitmap.h"
 #include "bitmapFileHeader.h"
+#include "gyro.h"
 
 #define MODE_STATIC_DIS		0
 static int msgID;
@@ -33,6 +34,12 @@ static int step = 0;
 static int running = 100;               // 참가자가 버튼 한번 누를때마다 달리는 거리에 쓰이는 변수
 static char *data;
 static int cols = 0, rows = 0;
+
+static int new_x = 520;
+static int new_y = 380;
+static int accel_x= 0;
+static int accel_y = 0;
+static int dalgona_start = 0;
 
 void *thread_object_2(){                //  버튼 입력 스레드
     while(stage3_end != 1){
@@ -71,6 +78,96 @@ void *thread_object_2(){                //  버튼 입력 스레드
 	}
 }
 
+void *thread_object_1(){
+    while(timer_end != 1){
+        // y 좌표 테스트
+        read_bmp("aim.bmp",&data,&cols,&rows);          // 참가자가 버튼 눌러 이동할때마다 새로 업데이트된 좌표로 참가자.bmp 출력 (TFT LCD)
+        fb_write_c(data,cols,rows, new_x , new_y);
+        accel_x = get_accel_x();
+        accel_y = get_accel_y();
+
+        printf("\n");
+    
+        
+        if(accel_x >= 4000 ){
+            printf("a : %d\n" ,accel_x);
+            new_y  = new_y + 10;
+        }
+        else if(accel_x <= -4000){
+            printf("a : %d\n" ,accel_x);
+            new_y = new_y - 10;
+        }
+        else if(accel_y >= 4000){
+            printf("b : %d\n" ,accel_y);
+            new_x = new_x + 10;
+        }
+        else if(accel_y <= -4000){
+            printf("b : %d\n" ,accel_y);
+            new_x = new_x - 10;
+        }
+
+        read_bmp("aim.bmp",&data,&cols,&rows);       
+        fb_write_c(data,cols,rows,new_x, new_y);
+        printf("x: %d       y: %d\n\n",new_y, new_x);
+
+        
+        if(new_y >= 120 && new_y <= 380 && new_x == 650){
+            printf("ok\n");
+        }
+        else if(new_y >= 120 && new_y <= 380 && new_x ==  390){
+            printf("ok\n");
+        }
+        else if(new_y == 120 && new_x >= 390 && new_x <= 650){
+            printf("ok\n");
+        }
+        else if(new_y == 380 && new_x >= 390 && new_x <= 650){
+            printf("ok\n");
+        }
+        else if(new_y == 120 && new_x == 520){
+            dalgona_start ++;            
+        }
+        else if(new_y == 380 && new_x ==  520 && dalgona_start != 0){
+            printf("STAGE CLEAR\n\n");
+            timer_end = 1;
+            success = 1;
+        }
+        else{
+            printf("die !!! \n\n");
+            system("sudo amixer sset 'Speaker' 40%");
+            system("sudo aplay ./gunsound.wav");     
+            read_bmp("end1.bmp", &data, &cols, &rows);      // end1.bmp 출력    (TFT LCD)
+            fb_write(data, cols,rows);
+            sleep(2);
+            read_bmp("end2.bmp", &data, &cols, &rows);      // end2.bmp 출력    (TFT LCD)
+            fb_write(data, cols,rows);
+            break;
+            }
+        usleep(125000);
+    }
+}
+
+void *thread_object_0(){
+    while(timer_end != 1){
+        for(t=25; t>=0; t--){
+        mode=MODE_STATIC_DIS;
+        fndDisp(t,mode);
+        sleep (1);
+        }
+        timer_end=1;
+    }
+
+    if(timer_end == 1 && success == 0){
+            printf("die !!! \n\n");
+            system("sudo amixer sset 'Speaker' 40%");
+            system("sudo aplay ./gunsound.wav");     
+            read_bmp("end1.bmp", &data, &cols, &rows);      // end1.bmp 출력    (TFT LCD)
+            fb_write(data, cols,rows);
+            sleep(2);
+            read_bmp("end2.bmp", &data, &cols, &rows);      // end2.bmp 출력    (TFT LCD)
+            fb_write(data, cols,rows);
+    }
+}
+
 int main(void){
     btn = 0;
     int screen_width;
@@ -93,10 +190,16 @@ int main(void){
 
     lcdtextWrite("GAME START", "");
 
-    read_bmp("squidgamestart.bmp", &data, &cols, &rows);                // 게임 시작 초기 화면 :: 초대장 사진 출력
+    //read_bmp("squidgamestart.bmp", &data, &cols, &rows);                // 게임 시작 초기 화면 :: 초대장 사진 출력
+    //fb_write(data, cols,rows);
+
+    read_bmp("dalgona.bmp", &data, &cols, &rows);                // 게임 시작 초기 화면 :: 초대장 사진 출력
     fb_write(data, cols,rows);
 
-    msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput), 0, 0);                   // 버튼 입력
+    
+    
+
+    msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput), 0, 0);                   // 버튼 입력`1
 
     while(1){
         int returnValue = 0;
@@ -104,9 +207,11 @@ int main(void){
         if(returnValue == -1) break;
     }
 
-    pthread_create(&thread[2],NULL,thread_object_2,NULL);                   // 버튼 입력 위한 스레드 생성
+    pthread_create(&thread[0],NULL,thread_object_0,NULL);                   // 버튼 입력 위한 스레드 생성
+    pthread_create(&thread[1],NULL,thread_object_1,NULL);                   // 버튼 입력 위한 스레드 생성
+    //pthread_create(&thread[2],NULL,thread_object_2,NULL);                   // 버튼 입력 위한 스레드 생성
     
-    while(stage3_end != 1){         
+    /*while(stage3_end != 1){         
         if(step == 3) {                         // 무궁화 꽃이 피었습니다 (5초 음성) 3번 반복했을때
             if(btn < 200){                      // 선까지 도달하지 못했으면 (실패)
                 lcdtextWrite("Stage 3", "FAILED");      
@@ -137,14 +242,17 @@ int main(void){
         fb_write_b(data,cols,rows,running);                      // 참가자 사진 x 좌표 이동하기 위해 "running" 인자 사용 
         sleep(3);                                                                   // 다음 무궁화 꽃이 피었습니다 음성 출력 전 3초 대기
     }
+*/
 
-    pthread_join(thread[2], NULL);
+    pthread_join(thread[0], NULL);
+    pthread_join(thread[1], NULL);
+    //pthread_join(thread[2], NULL);
     pwmInactiveAll();
     buttonExit();
     ledLibExit();
     lcdtextExit();
     close_bmp();
-   fb_close();   
+    fb_close();   
 
     return 0;
 }
