@@ -59,6 +59,10 @@ void *thread_object_0(){                 // 스레드 0 :: FND를 활용한 타�
 
         if(timer_end == 1 && fail == 0 && finish == 0){         // 실패하지 않았지만 시간내에 성공하지 못했으면
                 printf("die !!! \n\n");                                         // 그래도 게임 오버
+                lcdtextWrite("Stage 2", "FAILED");
+                pwmSetPercent(0, 0);                                // 탈락을때 컬러 LED :: Red
+                pwmSetPercent(0, 1);
+                pwmSetPercent(100, 2);
                 system("sudo amixer sset 'Speaker' 40%");
                 system("sudo aplay ./gunsound.wav");     
                 read_bmp("end1.bmp", &data, &cols, &rows);      // end1.bmp 출력    (TFT LCD)
@@ -75,8 +79,11 @@ void *thread_object_1(){                                //  스레드 1 :: 무�
 		msgrcv(msgID, &rcv.keyInput, sizeof(rcv.keyInput), 0, 0);          // 버튼 입력 메세지 받음
 		if(rcv.keyInput == 3){                                                                   // "Search" 버튼 눌리면
             if(mugunghwa_end == 1){                                                     // 무궁화 음성이 끝나서 영희가 쳐다보고 있는데 버튼 눌리면(움직이면) 게임 실패 => 탈락
-                lcdtextWrite("Stage 3", "FAILED");
+                lcdtextWrite("Stage 1", "FAILED");
 		        printf("Stage Failed !! \n");
+                pwmSetPercent(0, 0);                                // 탈락했을때 컬러 LED :: Red
+                pwmSetPercent(0, 1);
+                pwmSetPercent(100, 2);
                 stage1_end = 1;
                 system("sudo amixer sset 'Speaker' 40%");
                 system("sudo aplay ./gunsound.wav");                 // Text Lcd에 "Failed" 출력하고 총맞는 음성 재생
@@ -91,7 +98,7 @@ void *thread_object_1(){                                //  스레드 1 :: 무�
            else if(mugunghwa_end == 0){                                 // 무조건 무궁화 음성이 나오는 중에 움직여야함
                  if(btn == 20){                                                        // 버튼 80번 누르면 성공 !!
                     printf("Stage 1 Clear !! \n\n");                        // Text Lcd에 "CLEARED" 출력
-                    lcdtextWrite("Stage 3", "CLEAR");
+                    lcdtextWrite("Stage 1", "CLEAR");
                     stage_2 = 1;                                                    // <무궁화 꽃이 피었습니다> 스테이지를 클리어 후, 다음 스테이지 시작을 위한 플래그
                     stage1_end = 1; 
                     loop_break = 1;
@@ -103,6 +110,24 @@ void *thread_object_1(){                                //  스레드 1 :: 무�
                 
                 if(btn %2 == 1){                                                       
                     printf("Key pressed for %d times\n", btn/2+1);
+                }
+
+                 if(btn >= 20 && btn < 39){                                      // 버튼 10번 눌릴때마다 led 순서대로 하나씩 점등
+                    ledOnOff(0,1);                                                    // LED 8개 모두 점등되면 80번 클릭 되었다는 의미 => 통과 !
+                } else if(btn >= 40 && btn < 59){
+                    ledOnOff(1,1);
+                } else if(btn >= 60 && btn < 79){
+                    ledOnOff(2,1);
+                } else if(btn >= 80 && btn < 99){
+                    ledOnOff(3,1);
+                } else if(btn >= 100 && btn < 119){
+                    ledOnOff(4,1);
+                } else if(btn >= 120 && btn < 139){
+                    ledOnOff(5,1);
+                } else if(btn >= 140 && btn < 159){
+                    ledOnOff(6,1);
+                } else if(btn >= 160 && btn < 179){
+                    ledOnOff(7,1);
                 }
             }
         }
@@ -124,6 +149,8 @@ int main(void){
     ledLibInit();
     lcdtextInit();
     touchInit();
+    ledalloff();
+
 
     if ( fb_init(&screen_width, &screen_height, &bits_per_pixel, &line_length) < 0 )
     {
@@ -165,9 +192,13 @@ int main(void){
         if(returnValue == -1) break;
     }
 
+    pwmSetPercent(0, 0);                            // 살아있을때 컬러 LED :: Green
+    pwmSetPercent(100, 1);
+    pwmSetPercent(0, 2);
+
     pthread_create(&thread[1],NULL,thread_object_1,NULL);                   // 버튼 입력 위한 스레드 생성
     
-
+    lcdtextWrite("GAME START", "STAGE 1"); 
     ///////// < 무궁화 꽃이 피었습니다> /////////
     while(stage1_end != 1){         
         if(step == 3) {                         // 무궁화 꽃이 피었습니다 (5초 음성) 3번 반복했을때
@@ -176,6 +207,9 @@ int main(void){
                 stage1_end = 1;    
                 loop_break = 1;                                             // 무궁화 꽃이 피었습니다 게임 종료
 		        printf("Stage Failed !! \n");
+                pwmSetPercent(0, 0);                                // 탈락했을때 컬러 LED :: Red
+                pwmSetPercent(0, 1);
+                pwmSetPercent(100, 2);
                 system("sudo amixer sset 'Speaker' 40%");       
                 system("sudo aplay ./gunsound.wav");                    // 총 맞는 소리 재생
                 read_bmp("end1.bmp", &data, &cols, &rows);      // end1.bmp 출력    (TFT LCD)
@@ -209,7 +243,7 @@ int main(void){
         {
             printf ("FrameBuffer Init Failed\r\n");                   // TFT LCD 초기화
         }
-            
+        lcdtextWrite("GAME START", "STAGE 2");          
         pthread_create(&thread[0],NULL,thread_object_0,NULL);            // fnd 스레드 생성
         read_bmp("dalgona.bmp", &data, &cols, &rows);                        // 달고나 스테이지 배경 :: 달고나 사진 출력
         fb_write(data, cols,rows);
@@ -250,6 +284,9 @@ int main(void){
                 printf("STAGE CLEAR\n\n");
                 finish = 1;
                 timer_end = 1;
+                pwmSetPercent(100, 0);                                // 성공했을때 컬러 LED :: Blue
+                pwmSetPercent(0, 1);
+                pwmSetPercent(0, 2);
                 read_bmp("victory1.bmp", &data, &cols, &rows);      // vicroty1.bmp 출력    (TFT LCD)
                 fb_write(data, cols,rows);
                 sleep(2);
@@ -272,6 +309,9 @@ int main(void){
                 printf("die !!! \n\n");                                                                         // die :: 달고나를 잘못 자름 => 게임 오버
                 fail = 1;
                 timer_end = 1;
+                pwmSetPercent(0, 0);                                // 탈락했을때 컬러 LED :: Red
+                pwmSetPercent(0, 1);
+                pwmSetPercent(100, 2);
                 system("sudo amixer sset 'Speaker' 40%");
                 system("sudo aplay ./gunsound.wav");     
                 read_bmp("end1.bmp", &data, &cols, &rows);      // end1.bmp 출력    (TFT LCD)
