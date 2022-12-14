@@ -1,36 +1,21 @@
 CC = arm-linux-gnueabi-gcc
 AR = arm-linux-gnueabi-ar
 
-all: libMyPeri.a ledtest buzzertest fndtest buttontest colorledtest textlcdtest gyrotest
+all: libMyPeri.a btd_project
 
-gyrotest: gyrotest.c libMyPeri.a
-	$(CC) gyrotest.c -lMyPeri -L. -o gyrotest
+btd_project: btd_project.c libMyPeri.a led.h button.h buzzer.h fnd.h colorled.h textlcd.h libBitmap.h bitmapFileHeader.h gyro.h touch.h
+	$(CC) btd_project.c -lMyPeri -L. -lpthread -o btd_project
 
-textlcdtest: textlcdtest.c libMyPeri.a
-	$(CC) textlcdtest.c -lMyPeri -L. -o textlcdtest
-
-colorledtest: colorledtest.c libMyPeri.a
-	$(CC) colorledtest.c -lMyPeri -L. -o colorledtest
-
-ledtest: ledtest.c libMyPeri.a
-	$(CC) ledtest.c -lMyPeri -L. -o ledtest
-
-buttontest: buttontest.c libMyPeri.a
-	$(CC) buttontest.c -lMyPeri -L. -lpthread -o buttontest
-
-buzzertest: buzzertest.c libMyPeri.a
-	$(CC) buzzertest.c -lMyPeri -L. -o buzzertest
-
-fndtest: fndtest.c libMyPeri.a
-	$(CC) fndtest.c -lMyPeri -L. -o fndtest
-
-libMyPeri.a: button.o led.o buzzer.o fnd.o colorled.o textlcd.o gyro.o
-	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o colorled.o textlcd.o gyro.o
+libMyPeri.a: button.o led.o buzzer.o fnd.o colorled.o textlcd.o libBitmap.o gyro.o touch.o
+	$(AR) rc libMyPeri.a led.o button.o buzzer.o fnd.o colorled.o textlcd.o libBitmap.o gyro.o touch.o 
 
 gyro.o: gyro.h gyro.c
 	$(CC) -c gyro.c -o gyro.o
 
-textlcd.o: textlcddrv.h textlcd.c
+libBitmap.o: libBitmap.h bitmapFileHeader.h libBitmap.c
+	$(CC) -c libBitmap.c -o libBitmap.o
+
+textlcd.o: textlcd.h textlcd.c
 	$(CC) -c textlcd.c -o textlcd.o
 
 colorled.o: colorled.h colorled.c
@@ -47,3 +32,6 @@ button.o: button.h button.c
 
 led.o: led.h led.c
 	$(CC) -c led.c -o led.o
+
+touch.o: touch.h touch.c
+	$(CC) -c touch.c -o touch.o
