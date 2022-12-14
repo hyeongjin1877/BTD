@@ -13,6 +13,12 @@ int ledOnOff (int ledNum, int onOff){
     return 1;
 }
 
+int ledalloff(void){
+    for(int ff = 0; ff <7; ff++){
+        ledOnOff(ff,0);
+    }
+}
+
 int ledLibInit(void){
     fd=open("/dev/periled", O_RDWR);
     ledValue = 0;
